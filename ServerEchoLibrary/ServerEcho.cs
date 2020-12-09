@@ -23,6 +23,7 @@ namespace ServerEchoLibrary
         TcpClient tcpClient;
         NetworkStream stream;
         #endregion
+
         #region Properties
         /// <summary>
         /// This property gives access to the IP address of a server instance. Property can't be changed when the Server is running. 
