@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Cipher_Vigenere.cs" />
     <Compile Include="MainProgram.cs" />
     <Compile Include="ServerEchoAPM.cs" />
     <Compile Include="ServerEcho.cs" />
