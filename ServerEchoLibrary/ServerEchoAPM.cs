@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ServerEchoLibrary
 {
@@ -40,23 +41,57 @@ namespace ServerEchoLibrary
         {
             byte[] buffer = new byte[Buffer_size];
             byte[] responseBuffer = new byte[Buffer_size];
+            string secretKey = "etna";
+            string word;
 
             while (true)
             {
                 try
                 {
-                    stream.Read(buffer, 0, Buffer_size);
-
-                    string received = System.Text.Encoding.ASCII.GetString(buffer);
-                    Console.WriteLine(received);
-                    //switch case
-                    string response = CaesarCipher(received);
-
-                    responseBuffer = System.Text.Encoding.ASCII.GetBytes(response);
+                    string menu = "\n1. Szyfr cezara\n2. Szyfr przekatnokolumnowy z slowem klucz\n9. Wyjscie";
+                    responseBuffer = Encoding.ASCII.GetBytes(menu);
                     stream.Write(responseBuffer, 0, responseBuffer.Length);
 
+                    stream.Read(buffer, 0, Buffer_size);
+                    string received = Encoding.ASCII.GetString(buffer);
+
+                    Array.Clear(responseBuffer, 0, menu.Length);
+
+                    switch (received[0])
+                    {
+                        case '1':
+                            menu = "Wybrano szyfr cezara. Podaj slowo do zaszyfrowania: ";
+                            responseBuffer = Encoding.ASCII.GetBytes(menu);
+                            stream.Write(responseBuffer, 0, responseBuffer.Length);
+
+                            stream.Read(buffer, 0, Buffer_size);
+                            received = Encoding.ASCII.GetString(buffer);
+                            word = CaesarCipher(getMessage(received));
+
+                            responseBuffer = Encoding.ASCII.GetBytes(word);
+                            stream.Write(responseBuffer, 0, word.Length);
+                            break;
+                        case '2':
+                            menu = "Wybrano szyfr przekatnokolumnowy. Podaj slowo do zaszyfrowania: ";
+                            responseBuffer = Encoding.ASCII.GetBytes(menu);
+                            stream.Write(responseBuffer, 0, responseBuffer.Length);
+
+                            stream.Read(buffer, 0, Buffer_size);
+                            received = Encoding.ASCII.GetString(buffer);
+                            word = DiagonalColumnTranspositionCipherWithKey(getMessage(received), secretKey);
+
+                            responseBuffer = Encoding.ASCII.GetBytes(word);
+                            stream.Write(responseBuffer, 0, word.Length);
+                            break;
+                        default:
+                            menu = "Q";
+                            responseBuffer = Encoding.ASCII.GetBytes(menu);
+                            stream.Write(responseBuffer, 0, responseBuffer.Length);
+                            break;
+                    }
+                    
                     Array.Clear(buffer, 0, buffer.Length);
-                    Array.Clear(responseBuffer, 0, response.Length);
+                    Array.Clear(responseBuffer, 0, responseBuffer.Length);
                 }
                 catch (IOException e)
                 {
@@ -64,6 +99,15 @@ namespace ServerEchoLibrary
                 }
             }
         }
+
+        string getMessage(string received)
+        {
+            Regex rx = new Regex(@"\b(?<word>\w+)\b");
+            MatchCollection matches = rx.Matches(received);
+            GroupCollection groupCollection = matches[0].Groups;
+            return groupCollection["word"].Value;
+        }
+
         public override void Start()
         {
             Console.WriteLine("Start serwera");
@@ -90,25 +134,39 @@ namespace ServerEchoLibrary
         protected static string DiagonalColumnTranspositionCipherWithKey(string word, string secretKey)
         {
             string cipher = "";
-            int rows = (int)Math.Ceiling(word.Length / secretKey.Length * 1.0);
+            int rows = (int)Math.Ceiling(word.Length * 1.0 / secretKey.Length);
             int secretKeyLength = secretKey.Length;
             char[,] array = new char[rows, secretKeyLength];
             int counter = 0;
 
-            for(int i=0; i<rows; i++)
+            for (int i = 0; i < rows; i++)
             {
-                for(int j=0; j<secretKeyLength; j++)
+                for (int j = 0; j < secretKeyLength; j++)
                 {
-                    if (counter < secretKeyLength)
+                    if (counter < word.Length)
                         array[i, j] = word[counter];
                     else
-                        array[i, j] = 'X';
+                        array[i, j] = 'x';
                     counter++;
-                    Console.WriteLine(array[i, j]);
                 }
-                Console.WriteLine("\n");
             }
+            int[] indexes = getSortedIndex(secretKey);
+            int row, temp;
 
+            for (int i = 0; i < indexes.Length; i++)
+            {
+                row = 0;
+                temp = indexes[i];
+                for (int j = 0; j < rows; j++)
+                {
+                    cipher += array[row, temp];
+                    row++;
+                    temp--;
+                    if (temp < 0)
+                        temp = secretKey.Length - 1;
+                }
+
+            }
 
             return cipher;
         }

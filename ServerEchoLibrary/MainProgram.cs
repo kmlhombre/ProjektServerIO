@@ -11,7 +11,7 @@ namespace ServerEchoLibrary
     {
         private static void Main(string[] args)
         {
-            ServerEchoAPM serverEchoAPM = new ServerEchoAPM(IPAddress.Parse("127.0.0.1"), 2137);
+            ServerEchoAPM serverEchoAPM = new ServerEchoAPM(IPAddress.Parse("127.0.0.1"), 8000);
             serverEchoAPM.Start();
         }
     }
